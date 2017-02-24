@@ -54,6 +54,7 @@ function Hill(canvas, series, options, geometry) {
 	this.options = extend({
 		type: 'line', // 'line', 'column', 'bar', 'candlestick', 'columnrange', 'columnbar'
 		YAxisMinSize: 60,
+		XAxisMinStep: 1,
 		XAxisMinSize: 80,
 		drawYAxis: true,
 		drawXAxis: true,
@@ -160,7 +161,7 @@ function Hill(canvas, series, options, geometry) {
 			var line = extend({
 				type: 'line',
 				fillEmpty: false,
-				allowZerro: true,
+				allowZero: true,
 				strokeStyle: "#2B4D8C",
 				fillStyle: null,
 				strokeStyle2: "#7C272A",
@@ -213,14 +214,16 @@ function Hill(canvas, series, options, geometry) {
 							}
 						}
 					}
-					if (line.type === 'column' || line.type === 'line') {
-						hill.max = Math.max(point.actual, hill.max);
-						hill.min = Math.min(point.actual, hill.min);
-					} else {
-						hill.max = Math.max(point.max, hill.max);
-						hill.min = Math.min(point.min, hill.min);
+					if (line.allowZero || point.actual != 0) {
+						if (line.type === 'column' || line.type === 'line') {
+							hill.max = Math.max(point.actual, hill.max);
+							hill.min = Math.min(point.actual, hill.min);
+						} else {
+							hill.max = Math.max(point.max, hill.max);
+							hill.min = Math.min(point.min, hill.min);
+						}
+						line.data[k] = point;
 					}
-					line.data[k] = point;
 				}
 			}
 			line.step = (opt.to - opt.from) / Math.round(hill.geometry.width / line.dotInterval);
@@ -259,7 +262,7 @@ function Hill(canvas, series, options, geometry) {
 			for (var i = line.roundedFrom - 1; i <= opt.to; i++) {
 				var elIndex = hill.getX(lineIdx, i);
 
-				if (typeof points[i] !== 'undefined' && (points[i].actual !== 0 || !line.allowZerro)) {
+				if (typeof points[i] !== 'undefined' && (points[i].actual !== 0 || line.allowZero)) {
 					if (!els[elIndex]) {
 						els[elIndex] = {
 							actual: points[i].actual.fix6(),
@@ -391,7 +394,7 @@ function Hill(canvas, series, options, geometry) {
 
 		var opt = hill.options;
 		var step = hill.geometry.width / (opt.to - opt.from);
-		var gridSize = step * 60;
+		var gridSize = step * opt.XAxisMinStep;
 		while (gridSize < opt.XAxisMinSize) {
 			gridSize *= 2;
 		}
